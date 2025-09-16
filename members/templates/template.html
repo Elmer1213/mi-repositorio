@@ -1,24 +1,13 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html>
-  <body>
-    <p>The queryset object:</p>
+<body>
+  <link rel="stylesheet" href="{% static 'myglobal.css' %}">
+</body>
 
-    {{ mymembers }}
-
-    <p>Loop through the items:</p>
-    <table border="1">
-        <tr>
-            <td>ID</td>
-            <td>firstname</td>
-            <td>lastname</td>
-        </tr>
-      {% for x in mymembers %}
-      <tr>
-        <td>{{ x.id }}</td>
-        <td>{{ x.firstname }}</td>
-        <td>{{ x.lastname }}</td>
-      </tr>
-      {% endfor %}
-    </table>
-  </body>
-</html>
+  {% for x in fruits  %}
+    <h1>{{ x }}</h1>
+  {% endfor %}
+  <p>In myfirst.css you can see what the stylesheet looks like.</p>
+  </html>
