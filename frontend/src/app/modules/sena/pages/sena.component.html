@@ -1,0 +1,14 @@
+
+<h2>Lista de Usuarios</h2>
+<ul>
+  <li *ngFor="let user of users">
+    {{ user.name }} - {{ user.email }}
+  </li>
+</ul>
+<hr>
+<h3>Agregar nuevo usuario</h3>
+<form (ngSubmit)="createUser()">
+  <input type="text" [(ngModel)]="newUser.name" name="name" placeholder="Nombre" required>
+  <input type="email" [(ngModel)]="newUser.email" name="email" placeholder="Correo" required>
+  <button type="submit">Agregar usuario</button>
+</form>

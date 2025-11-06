@@ -1,0 +1,19 @@
+/* You can add global styles to this file, and also import other style files */
+
+$primary-color: #007bff;
+$font-stack: 'Roboto', sans-serif;
+
+body {
+  font-family: $font-stack;
+  background-color: lighten($primary-color, 40%);
+}
+
+button {
+  background: $primary-color;
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  &:hover {
+    background: darken($primary-color, 10%);
+  }
+}
