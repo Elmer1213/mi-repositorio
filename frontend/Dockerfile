@@ -1,16 +1,17 @@
-# Etapa de build
-FROM node:18
-
+# Etapa de construcción
+FROM node:18 AS build
 WORKDIR /app
 
 COPY package*.json ./
+RUN npm install -g @angular/cli
 RUN npm install
-
 COPY . .
+RUN ng build --configuration docker
 
-# Compilar app en modo producción
-RUN npm run build -- --configuration production
-
-# Ejecutar Angular en modo servidor de desarrollo
-CMD ["npm", "run", "start", "--", "--host", "0.0.0.0"]
-
+# Etapa de ejecución
+FROM node:18
+WORKDIR /app
+COPY --from=build /app/dist/frontend ./dist/frontend
+RUN npm install -g http-server
+EXPOSE 4200
+CMD ["http-server", "dist/frontend", "-p", "4200", "-a", "0.0.0.0"]

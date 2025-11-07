@@ -1,5 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import { SenaService } from '../services/sena.service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
+
+interface User {
+  id?: number;
+  name: string;
+  email: string;
+}
 
 @Component({
   selector: 'app-sena',
@@ -8,39 +15,32 @@ import { SenaService } from '../services/sena.service';
 })
 export class SenaComponent implements OnInit {
 
- newUser: { name: string; email: string } = { name: '', email: '' };
+  users: User[] = [];
+  newUser: User = { name: '', email: '' };
+  apiUrl = environment.apiUrl;
 
-  // Aquí declaramos la variable que Angular necesita
-  users: any[] = [];
+  constructor(private http: HttpClient) {}
 
-  constructor(private senaService: SenaService) {}
-
-  ngOnInit(): void {
-    this.obtenerUsuarios();
+  ngOnInit() {
+    this.getUsers();
   }
 
-  obtenerUsuarios() {
-    this.senaService.getAll().subscribe({
-      next: (data: any) => {
-        this.users = data;
-        console.log('Usuarios obtenidos:', this.users);
-      },
-      error: (err: any) => {
-        console.error('Error al obtener usuarios:', err);
-      }
+  getUsers() {
+    this.http.get<User[]>(`${this.apiUrl}/users`).subscribe({
+      next: (data) => this.users = data,
+      error: (err) => console.error('Error cargando usuarios:', err)
     });
   }
 
-  createUser(): void {
-    this.senaService.create(this.newUser).subscribe({
-      next: (res: any) => {
-        console.log('Usuario creado:', res);
-        this.obtenerUsuarios();
-        this.newUser = { name: '', email: '' }; 
+  addUser() {
+    if (!this.newUser.name || !this.newUser.email) return;
+
+    this.http.post<User>(`${this.apiUrl}/users`, this.newUser).subscribe({
+      next: (user) => {
+        this.users.push(user);
+        this.newUser = { name: '', email: '' }; // limpiar campos
       },
-      error: (err: any) => {
-        console.error('Error al crear usuario:', err);
-      }
+      error: (err) => console.error('Error al crear usuario:', err)
     });
   }
 }

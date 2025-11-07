@@ -1,14 +1,38 @@
+<div class="container">
+  <h2>Gestión de Usuarios - SENA</h2>
 
-<h2>Lista de Usuarios</h2>
-<ul>
-  <li *ngFor="let user of users">
-    {{ user.name }} - {{ user.email }}
-  </li>
-</ul>
-<hr>
-<h3>Agregar nuevo usuario</h3>
-<form (ngSubmit)="createUser()">
-  <input type="text" [(ngModel)]="newUser.name" name="name" placeholder="Nombre" required>
-  <input type="email" [(ngModel)]="newUser.email" name="email" placeholder="Correo" required>
-  <button type="submit">Agregar usuario</button>
-</form>
+  <form (ngSubmit)="addUser()" #userForm="ngForm" class="form">
+    <input
+      type="text"
+      name="name"
+      [(ngModel)]="newUser.name"
+      placeholder="Nombre completo"
+      required
+    />
+
+    <input
+      type="email"
+      name="email"
+      [(ngModel)]="newUser.email"
+      placeholder="Correo electrónico"
+      required
+    />
+
+    <button type="submit" [disabled]="!userForm.form.valid">Agregar Usuario</button>
+  </form>
+
+  <hr />
+
+  <div *ngIf="users.length > 0; else noUsers">
+    <h3>Usuarios registrados</h3>
+    <ul>
+      <li *ngFor="let user of users">
+        {{ user.name }} — {{ user.email }}
+      </li>
+    </ul>
+  </div>
+
+  <ng-template #noUsers>
+    <p>No hay usuarios registrados todavía.</p>
+  </ng-template>
+</div>

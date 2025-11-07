@@ -6,27 +6,27 @@ import { environment } from '../../../../environments/environment';
 export interface Item {
   id?: number;
   name: string;
-  description?: string;
+  email?: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class SenaService {
-  private apiUrl = 'http://localhost:8000/users';
+  private baseUrl = `${environment.apiUrl}/users`;
   // `${environment.apiUrl}/items`;
 
   constructor(private http: HttpClient) {}
 
   getAll(): Observable<Item[]> {
-    return this.http.get<Item[]>(this.apiUrl);
+    return this.http.get<Item[]>(this.baseUrl);
   }
 
   create(item: Item): Observable<Item> {
-    return this.http.post<Item>(this.apiUrl, item);
+    return this.http.post<Item>(this.baseUrl, item);
   }
 
   delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 }

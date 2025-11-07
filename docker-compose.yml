@@ -32,15 +32,17 @@ services:
 
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
     container_name: frontend
+    restart: always
     depends_on:
       - fastapi_app
     ports:
       - "4200:4200"
-    volumes:
-      - ./frontend:/app
-    working_dir: /app
+    environment:
+      - NODE_ENV=production
+      - CHOKIDAR_USEPOLLING=true
     networks:
       - backend
 

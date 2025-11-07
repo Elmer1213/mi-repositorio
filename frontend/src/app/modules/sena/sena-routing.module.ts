@@ -8,4 +8,4 @@ const routes: Routes = [{ path: '', component: SenaComponent }];
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule]
 })
-export class SenaRoutingModule { }
+export class SenaRoutingModule {}

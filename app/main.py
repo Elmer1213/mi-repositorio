@@ -7,7 +7,7 @@ from app.database import engine, Base
 from app.models import User  # Importar todos los modelos que tengas
 
 # Importar routers y logger
-from app.routers import users, health
+from app.routers import users, health, users_fake
 from app.utils.logger_config import logger
 
 # Crear tablas si no existen
@@ -19,6 +19,7 @@ app = FastAPI(title="FastAPI + MySQL (WSL)")
 # Routers
 app.include_router(health.router)
 app.include_router(users.router)
+app.include_router(users_fake.router)
 
 # -----------------------
 # Manejo global de errores
