@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   db:
     image: mysql:8.0
@@ -30,10 +32,10 @@ services:
     networks:
       - backend
 
-
   frontend:
     build:
       context: ./frontend
+      dockerfile: Dockerfile
     container_name: frontend
     restart: always
     depends_on:
@@ -41,8 +43,10 @@ services:
     ports:
       - "4200:4200"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./frontend:/app
     networks:
       - backend
 
