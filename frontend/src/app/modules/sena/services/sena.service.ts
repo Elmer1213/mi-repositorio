@@ -13,8 +13,7 @@ export interface Item {
   providedIn: 'root'
 })
 export class SenaService {
-  private baseUrl = `${environment.apiUrl}/users`;
-  // `${environment.apiUrl}/items`;
+  private baseUrl = `${environment.apiUrl}/users/`;
 
   constructor(private http: HttpClient) {}
 
