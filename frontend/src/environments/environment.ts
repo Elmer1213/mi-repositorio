@@ -1,5 +1,5 @@
 export const environment = {
   production: false,
     // URL de tu backend FastAPI
-  apiUrl: 'http://localhost:8000'
+  apiUrl: 'http://fastapi_app:8000'
 };

@@ -26,7 +26,7 @@ export class SenaComponent implements OnInit {
   }
 
   getUsers() {
-    this.http.get<User[]>(`${this.apiUrl}/users`).subscribe({
+    this.http.get<User[]>(`${this.apiUrl}/users/`).subscribe({
       next: (data) => this.users = data,
       error: (err) => console.error('Error cargando usuarios:', err)
     });
@@ -35,10 +35,11 @@ export class SenaComponent implements OnInit {
   addUser() {
     if (!this.newUser.name || !this.newUser.email) return;
 
-    this.http.post<User>(`${this.apiUrl}/users`, this.newUser).subscribe({
+    this.http.post<User>(`${this.apiUrl}/users/`, this.newUser).subscribe({
       next: (user) => {
         this.users.push(user);
-        this.newUser = { name: '', email: '' }; // limpiar campos
+         // limpiar campos
+        this.newUser = { name: '', email: '' };
       },
       error: (err) => console.error('Error al crear usuario:', err)
     });

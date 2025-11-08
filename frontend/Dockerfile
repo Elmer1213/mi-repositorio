@@ -1,17 +1,19 @@
-# Etapa de construcción
-FROM node:18 AS build
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm install -g @angular/cli
-RUN npm install
-COPY . .
-RUN ng build --configuration docker
-
-# Etapa de ejecución
+# Base
 FROM node:18
 WORKDIR /app
-COPY --from=build /app/dist/frontend ./dist/frontend
+
+# Instalar Angular CLI y http-server (opcional)
+RUN npm install -g @angular/cli
 RUN npm install -g http-server
+
+# Copiar todo el código del frontend
+COPY . .
+
+# Instalar dependencias
+RUN npm install
+
+# Exponer puerto 4200
 EXPOSE 4200
-CMD ["http-server", "dist/frontend", "-p", "4200", "-a", "0.0.0.0"]
+
+# Comando para desarrollo en caliente
+CMD ["ng", "serve", "--host", "0.0.0.0", "--port", "4200", "--disable-host-check"]
