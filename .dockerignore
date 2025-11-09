@@ -1,0 +1,53 @@
+# Node modules (CRÍTICO - esto es lo que causa el problema)
+**/node_modules
+frontend/node_modules
+node_modules
+
+# Build outputs
+**/dist
+**/build
+**/.angular
+**/.next
+**/coverage
+
+# Python
+venv/
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+*.egg-info
+
+# Entorno
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.swo
+
+# Git
+.git
+.gitignore
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose.yml
+
+# Archivos temporales
+*.tmp
+*.pid
+*.sock

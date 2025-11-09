@@ -3,29 +3,46 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
-export interface Item {
+// Interfaz del modelo de usuario (idéntica a la del backend)
+export interface User {
   id?: number;
   name: string;
-  email?: string;
+  email: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class SenaService {
-  private baseUrl = `${environment.apiUrl}/users/`;
+  private baseUrl = `${environment.apiUrl}/users`; // sin "/" al final
 
   constructor(private http: HttpClient) {}
 
-  getAll(): Observable<Item[]> {
-    return this.http.get<Item[]>(this.baseUrl);
+  // -----------------------------
+  // GET - Obtener todos los usuarios
+  // -----------------------------
+  getAll(): Observable<User[]> {
+    return this.http.get<User[]>(this.baseUrl);
   }
 
-  create(item: Item): Observable<Item> {
-    return this.http.post<Item>(this.baseUrl, item);
+  // -----------------------------
+  // POST - Crear usuario
+  // -----------------------------
+  create(user: User): Observable<User> {
+    return this.http.post<User>(this.baseUrl, user);
   }
 
-  delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  // -----------------------------
+  // PUT - Actualizar usuario
+  // -----------------------------
+  update(id: number, user: User): Observable<User> {
+    return this.http.put<User>(`${this.baseUrl}/${id}`, user);
+  }
+
+  // -----------------------------
+  // DELETE - Eliminar usuario
+  // -----------------------------
+  delete(id: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.baseUrl}/${id}`);
   }
 }

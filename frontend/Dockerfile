@@ -12,7 +12,8 @@ RUN npm install -g @angular/cli@15
 RUN npm install
 
 # Copiar el resto del código
-COPY . .
+COPY src ./src
+COPY angular.json tsconfig.json tsconfig.app.json ./
 
 # Exponer puerto
 EXPOSE 4200

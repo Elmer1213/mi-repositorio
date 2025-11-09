@@ -1,7 +1,7 @@
 <div class="container">
   <h2>Gestión de Usuarios - SENA</h2>
 
-  <form (ngSubmit)="addUser()" #userForm="ngForm" class="form">
+  <form (ngSubmit)="saveUser()" #userForm="ngForm" class="form">
     <input
       type="text"
       name="name"
@@ -9,7 +9,6 @@
       placeholder="Nombre completo"
       required
     />
-
     <input
       type="email"
       name="email"
@@ -17,8 +16,10 @@
       placeholder="Correo electrónico"
       required
     />
-
-    <button type="submit" [disabled]="!userForm.form.valid">Agregar Usuario</button>
+    <button type="submit" [disabled]="!userForm.form.valid">
+      {{ editingUser ? "Actualizar Usuario" : "Agregar Usuario" }}
+    </button>
+    <button *ngIf="editingUser" type="button" (click)="cancelEdit()">Cancelar</button>
   </form>
 
   <hr />
@@ -28,6 +29,8 @@
     <ul>
       <li *ngFor="let user of users">
         {{ user.name }} — {{ user.email }}
+        <button (click)="editUser(user)">Editar</button>
+        <button (click)="deleteUser(user.id!)">Eliminar</button>
       </li>
     </ul>
   </div>

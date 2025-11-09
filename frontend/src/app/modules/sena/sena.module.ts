@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { SenaRoutingModule } from './sena-routing.module';
 import { SenaComponent } from './pages/sena.component';
 import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
 
 
 @NgModule({
@@ -10,7 +11,8 @@ import { FormsModule } from '@angular/forms';
   imports: [
     CommonModule,
     SenaRoutingModule,
-    FormsModule
+    FormsModule,
+    HttpClientModule
   ],
   exports: [SenaComponent]
 })
