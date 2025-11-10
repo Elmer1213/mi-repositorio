@@ -18,16 +18,16 @@ export class SenaComponent implements OnInit {
   users: User[] = [];
   newUser: User = { name: '', email: '' };
   // nuevo campo para saber si estamos editando
-  editingUser: User | null = null; 
+  editingUser: User | null = null;
   apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   ngOnInit() {
     this.getUsers();
   }
 
-  // 🔹 Obtener todos los usuarios
+  // Obtener todos los usuarios
   getUsers() {
     this.http.get<User[]>(`${this.apiUrl}/users/`).subscribe({
       next: (data) => this.users = data,
@@ -38,7 +38,7 @@ export class SenaComponent implements OnInit {
     });
   }
 
-  // 🔹 Crear o actualizar usuario
+  //Crear o actualizar usuario
   saveUser() {
     if (!this.newUser.name || !this.newUser.email) {
       alert('Por favor completa todos los campos.');
@@ -63,7 +63,7 @@ export class SenaComponent implements OnInit {
         next: (user) => {
           this.users.push(user);
           // limpiar campos
-          this.newUser = { name: '', email: '' }; 
+          this.newUser = { name: '', email: '' };
         },
         error: (err) => {
           console.error('Error al crear usuario:', err.message);

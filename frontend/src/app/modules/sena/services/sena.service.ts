@@ -14,7 +14,7 @@ export interface User {
   providedIn: 'root'
 })
 export class SenaService {
-  private baseUrl = `${environment.apiUrl}/users`; // sin "/" al final
+  private baseUrl = `${environment.apiUrl}/users`; 
 
   constructor(private http: HttpClient) {}
 

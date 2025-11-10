@@ -8,9 +8,9 @@ describe('SenaComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ SenaComponent ]
+      declarations: [SenaComponent]
     })
-    .compileComponents();
+      .compileComponents();
 
     fixture = TestBed.createComponent(SenaComponent);
     component = fixture.componentInstance;

@@ -1,41 +1,101 @@
 <div class="container">
-  <h2>Gestión de Usuarios - SENA</h2>
+  <h2><i class="fas fa-users"></i> Gestión de Usuarios - SENA</h2>
 
+  <!-- FORMULARIO -->
   <form (ngSubmit)="saveUser()" #userForm="ngForm" class="form">
-    <input
-      type="text"
-      name="name"
-      [(ngModel)]="newUser.name"
-      placeholder="Nombre completo"
-      required
-    />
-    <input
-      type="email"
-      name="email"
-      [(ngModel)]="newUser.email"
-      placeholder="Correo electrónico"
-      required
-    />
-    <button type="submit" [disabled]="!userForm.form.valid">
-      {{ editingUser ? "Actualizar Usuario" : "Agregar Usuario" }}
-    </button>
-    <button *ngIf="editingUser" type="button" (click)="cancelEdit()">Cancelar</button>
+    <div class="form-group">
+      <label for="name">Nombre completo:</label>
+      <input
+        id="name"
+        type="text"
+        name="name"
+        [(ngModel)]="newUser.name"
+        placeholder="Ej: Juan Pérez"
+        required
+      />
+      <small *ngIf="!newUser.name && userForm.submitted" class="error-msg">
+        El nombre es obligatorio.
+      </small>
+    </div>
+
+    <div class="form-group">
+      <label for="email">Correo electrónico:</label>
+      <input
+        id="email"
+        type="email"
+        name="email"
+        [(ngModel)]="newUser.email"
+        placeholder="correo@ejemplo.com"
+        required
+      />
+      <small *ngIf="!newUser.email && userForm.submitted" class="error-msg">
+        El correo es obligatorio.
+      </small>
+    </div>
+
+    <div class="form-buttons">
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="!userForm.form.valid"
+      >
+        <i
+          class="fas"
+          [ngClass]="editingUser ? 'fa-sync-alt' : 'fa-user-plus'"
+        ></i>
+        {{ editingUser ? 'Actualizar Usuario' : 'Agregar Usuario' }}
+      </button>
+
+      <button
+        *ngIf="editingUser"
+        type="button"
+        class="btn btn-secondary"
+        (click)="cancelEdit()"
+      >
+        <i class="fas fa-times"></i> Cancelar
+      </button>
+    </div>
   </form>
 
   <hr />
 
+  <!-- LISTA DE USUARIOS -->
   <div *ngIf="users.length > 0; else noUsers">
-    <h3>Usuarios registrados</h3>
-    <ul>
-      <li *ngFor="let user of users">
-        {{ user.name }} — {{ user.email }}
-        <button (click)="editUser(user)">Editar</button>
-        <button (click)="deleteUser(user.id!)">Eliminar</button>
-      </li>
-    </ul>
+    <h3><i class="fas fa-list"></i> Usuarios Registrados</h3>
+
+    <table class="user-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Correo electrónico</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of users">
+          <td>{{ user.id }}</td>
+          <td>{{ user.name }}</td>
+          <td>{{ user.email }}</td>
+          <td>
+            <button (click)="editUser(user)" class="btn-edit" title="Editar">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button
+              (click)="deleteUser(user.id)"
+              class="btn-delete"
+              title="Eliminar"
+            >
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
+  <!-- MENSAJE SI NO HAY USUARIOS -->
   <ng-template #noUsers>
-    <p>No hay usuarios registrados todavía.</p>
+    <p class="no-users"><i class="fas fa-info-circle"></i> No hay usuarios registrados.</p>
   </ng-template>
 </div>
