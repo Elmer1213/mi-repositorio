@@ -10,7 +10,12 @@ const routes: Routes = [
   {
     path: 'sena',
     loadChildren: () =>
-      import('./modules/sena/sena.module').then(m => m.SenaModule)
+      import('./modules/sena/modules/sena.module').then(m => m.SenaModule)
+  },
+  {
+    path: 'excel-upload',
+    loadChildren: () =>
+      import('./modules/excel-upload/excel-upload.module').then(m => m.ExcelUploadModule)
   }
 ];
 
@@ -18,4 +23,4 @@ const routes: Routes = [
   imports: [RouterModule.forRoot(routes, { useHash: false })],
   exports: [RouterModule]
 })
-export class AppRoutingModule {}
+export class AppRoutingModule { }

@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SenaRoutingModule } from './sena-routing.module';
-import { SenaComponent } from './pages/sena.component';
+import { SenaComponent } from '../pages/sena.component';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 

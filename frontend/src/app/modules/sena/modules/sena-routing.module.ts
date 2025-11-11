@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { SenaComponent } from './pages/sena.component';
+import { SenaComponent } from '../pages/sena.component';
 
 const routes: Routes = [{ path: '', component: SenaComponent }];
 

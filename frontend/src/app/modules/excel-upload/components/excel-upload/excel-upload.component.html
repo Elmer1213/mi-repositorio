@@ -1,0 +1,179 @@
+<div class="excel-upload-container">
+  
+  <!-- Header -->
+  <div class="header">
+    <h1>Carga Masiva de Usuarios</h1>
+    <p class="subtitle">Sube un archivo Excel con los datos de usuarios</p>
+    <button class="btn-secondary" (click)="downloadTemplate()">
+      📥 Descargar Template
+    </button>
+  </div>
+
+  <!-- Messages -->
+  <div class="messages">
+    <div class="alert alert-success" *ngIf="successMessage">
+      ✓ {{ successMessage }}
+    </div>
+    <div class="alert alert-error" *ngIf="errorMessage">
+      ✗ {{ errorMessage }}
+    </div>
+  </div>
+
+  <!-- Upload Zone -->
+  <div class="upload-section">
+    <div 
+      class="drop-zone" 
+      [class.dragging]="isDragging"
+      [class.has-file]="selectedFile"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave($event)"
+      (drop)="onDrop($event)"
+      (click)="fileInput.click()">
+      
+      <input 
+        #fileInput 
+        type="file" 
+        accept=".xlsx,.xls" 
+        (change)="onFileSelected($event)"
+        style="display: none">
+      
+      <div class="drop-zone-content" *ngIf="!selectedFile">
+        <div class="icon">📄</div>
+        <p class="title">Arrastra tu archivo Excel aquí</p>
+        <p class="subtitle">o haz clic para seleccionar</p>
+        <p class="info">Formatos: .xlsx, .xls (máx. 10MB)</p>
+      </div>
+
+      <div class="file-info" *ngIf="selectedFile">
+        <div class="icon">✓</div>
+        <p class="filename">{{ selectedFile.name }}</p>
+        <p class="filesize">{{ (selectedFile.size / 1024 / 1024).toFixed(2) }} MB</p>
+        <button class="btn-remove" (click)="resetUpload(); $event.stopPropagation()">
+          🗑️ Quitar archivo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview Section -->
+  <div class="preview-section" *ngIf="previewData">
+    <div class="preview-header">
+      <h2>Preview de Datos</h2>
+      <div class="stats">
+        <span class="stat">
+          <strong>Total:</strong> {{ previewData.total_rows }} filas
+        </span>
+        <span class="stat" [class.error]="previewData.has_errors">
+          <strong>Errores:</strong> 
+          {{ previewData.preview_rows.filter(r => !r.is_valid).length }}
+        </span>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="preview-table">
+        <thead>
+          <tr>
+            <th>Fila</th>
+            <th>Nombre</th>
+            <th>Email</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr 
+            *ngFor="let row of previewData.preview_rows" 
+            [class.row-error]="!row.is_valid"
+            [class.row-success]="row.is_valid">
+            <td>{{ row.row_number }}</td>
+            <td>{{ row.name }}</td>
+            <td>{{ row.email }}</td>
+            <td class="status-cell">
+              <span class="status-badge" [class.valid]="row.is_valid">
+                {{ row.is_valid ? '✓ Válido' : '✗ Error' }}
+              </span>
+              <ul class="error-list" *ngIf="row.errors.length > 0">
+                <li *ngFor="let error of row.errors">{{ error }}</li>
+              </ul>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Upload Button -->
+    <div class="actions">
+      <button 
+        class="btn-primary btn-large"
+        [disabled]="previewData.has_errors || isUploading"
+        (click)="uploadData()">
+        <span *ngIf="!isUploading">⬆️ Subir Datos a Base de Datos</span>
+        <span *ngIf="isUploading">⏳ Subiendo...</span>
+      </button>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-section" *ngIf="isUploading || uploadComplete">
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="uploadProgress">
+          <span class="progress-text">{{ uploadProgress }}%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Preview -->
+  <div class="loading" *ngIf="isLoadingPreview">
+    <div class="spinner"></div>
+    <p>Cargando preview...</p>
+  </div>
+
+  <!-- Upload History -->
+  <div class="logs-section">
+    <div class="logs-header">
+      <h2>Historial de Cargas</h2>
+      <button class="btn-secondary" (click)="loadUploadLogs()">
+        🔄 Actualizar
+      </button>
+    </div>
+
+    <div class="loading" *ngIf="isLoadingLogs">
+      <div class="spinner"></div>
+    </div>
+
+    <div class="table-container" *ngIf="!isLoadingLogs">
+      <table class="logs-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Archivo</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th>Total</th>
+            <th>Exitosos</th>
+            <th>Fallidos</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let log of uploadLogs">
+            <td>{{ log.id }}</td>
+            <td>{{ log.filename }}</td>
+            <td>{{ log.uploaded_at | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusClass(log.status)">
+                {{ getStatusText(log.status) }}
+              </span>
+            </td>
+            <td>{{ log.total_rows }}</td>
+            <td class="success-text">{{ log.successful_rows }}</td>
+            <td class="error-text">{{ log.failed_rows }}</td>
+          </tr>
+          <tr *ngIf="uploadLogs.length === 0">
+            <td colspan="7" class="no-data">No hay registros de cargas</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
