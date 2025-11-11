@@ -1,27 +1,22 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError, HTTPException
-from fastapi.middleware.cors import CORSMiddleware  # <-- Importar middleware
+from fastapi.middleware.cors import CORSMiddleware
+from app.websockets.manager import WebSocketManager
 
-# Importar Base y engine para crear tablas
 from app.database import engine, Base
-from app.models import User
-from app.routers import users, health, users_fake
+from app.models import User, ExcelUploadLog 
+from app.routers import users, health, users_fake, excel_upload  
 from app.utils.logger_config import logger
 
 # Crear tablas si no existen
 Base.metadata.create_all(bind=engine)
 
-# Inicializar app
 app = FastAPI(title="FastAPI + MySQL (WSL)")
 
-# -----------------------
-# Configurar CORS
-# -----------------------
+# CORS
 origins = [
-    # Angular fuera de Docker
     "http://localhost:4200", 
-     # Angular dentro de Docker  
     "http://frontend:4200",   
 ]
 
@@ -33,14 +28,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+websocket_manager = WebSocketManager()
+
+@app.websocket("/ws/progress")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket_manager.connect(websocket)
+    try:
+        while True:
+            await websocket.receive_text()  # Mantiene conexión abierta
+    except Exception:
+        websocket_manager.disconnect(websocket)
+
+
 # Routers
 app.include_router(health.router)
 app.include_router(users.router)
 app.include_router(users_fake.router)
+app.include_router(excel_upload.router)  
 
-# -----------------------
 # Manejo global de errores
-# -----------------------
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     logger.error(f"Error de validación en {request.url.path}: {exc.errors()}")

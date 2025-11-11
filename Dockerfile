@@ -30,6 +30,9 @@ RUN chmod +x /app/wait_for_db.sh
 
 # Crear usuario sin privilegios
 RUN adduser --disabled-password appuser
+
+ENV PATH="/home/appuser/.local/bin:/usr/local/bin:${PATH}"
+
 USER appuser
 
 # Healthcheck para verificar si la API responde
