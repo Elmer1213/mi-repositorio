@@ -1,23 +1,28 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, WebSocket
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from app.websockets.manager import WebSocketManager
+
+#Corrección: tu carpeta se llama websocket, no websockets
+from .websockects.manager import WebSocketManager
+from .websockects.websocket import router as websocket_router
+
 
 from app.database import engine, Base
-from app.models import User, ExcelUploadLog 
-from app.routers import users, health, users_fake, excel_upload  
+from app.models import User, ExcelUploadLog
+from app.routers import users, health, users_fake, excel_upload
 from app.utils.logger_config import logger
 
-# Crear tablas si no existen
+
+#Crear tablas si no existen
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="FastAPI + MySQL (WSL)")
 
-# CORS
+#Configuración de CORS
 origins = [
-    "http://localhost:4200", 
-    "http://frontend:4200",   
+    "http://localhost:4200",
+    "http://frontend:4200",
 ]
 
 app.add_middleware(
@@ -28,23 +33,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+#WebSocket Manager
 websocket_manager = WebSocketManager()
 
 @app.websocket("/ws/progress")
 async def websocket_endpoint(websocket: WebSocket):
-    await websocket_manager.connect(websocket)
+    """WebSocket básico para seguimiento de progreso."""
+    await websocket_manager.connect(websocket, client_id=str(id(websocket)))
     try:
         while True:
-            await websocket.receive_text()  # Mantiene conexión abierta
+            await websocket.receive_text()  # Mantiene la conexión abierta
     except Exception:
-        websocket_manager.disconnect(websocket)
+        websocket_manager.disconnect(str(id(websocket)))
 
-
-# Routers
+#Routers
 app.include_router(health.router)
 app.include_router(users.router)
 app.include_router(users_fake.router)
-app.include_router(excel_upload.router)  
+app.include_router(excel_upload.router)
+ # ahora sí registras tu router real
+app.include_router(websocket_router) 
+
+
 
 # Manejo global de errores
 @app.exception_handler(RequestValidationError)

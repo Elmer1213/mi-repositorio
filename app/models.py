@@ -23,7 +23,8 @@ class ExcelUploadLog(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), nullable=False)
-    uploaded_at = Column(DateTime, datetime.now(timezone.utc))
+    from sqlalchemy.sql import func
+    uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
     status = Column(Enum(UploadStatusEnum), default=UploadStatusEnum.PENDING)
     total_rows = Column(Integer, default=0)
     successful_rows = Column(Integer, default=0)
