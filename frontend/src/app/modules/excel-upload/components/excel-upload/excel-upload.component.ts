@@ -1,9 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ExcelUploadService } from '../../services/excel-upload.service';
-import { 
-  ExcelPreviewResponse, 
-  ExcelPreviewRow, 
-  UploadLog 
+import {
+  ExcelPreviewResponse,
+  ExcelPreviewRow,
+  UploadLog
 } from '../../models/excel-upload.model';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -14,116 +14,175 @@ import { takeUntil } from 'rxjs/operators';
   styleUrls: ['./excel-upload.component.scss']
 })
 export class ExcelUploadComponent implements OnInit, OnDestroy {
-  
+
   private destroy$ = new Subject<void>();
-  
-  // File management
+
+  // Archivo seleccionado
   selectedFile: File | null = null;
   isDragging = false;
-  
-  // Preview data
+
+  // Vista previa
   previewData: ExcelPreviewResponse | null = null;
   isLoadingPreview = false;
-  
-  // Upload progress
+
+  // Progreso de subida
   uploadProgress = 0;
   isUploading = false;
   uploadComplete = false;
-  
-  // Logs
+
+  // Registros del historial
   uploadLogs: UploadLog[] = [];
   isLoadingLogs = false;
-  
-  // Messages
+
+  // Mensajes al usuario
   errorMessage = '';
   successMessage = '';
 
   constructor(private excelUploadService: ExcelUploadService) {}
 
+  // -------------------- CICLO DE VIDA --------------------
+
   ngOnInit(): void {
     this.loadUploadLogs();
     this.subscribeToProgress();
+    this.excelUploadService.connectWebSocket(); 
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    this.excelUploadService.disconnectWebSocket(); 
+  }
+
+  // -------------------- GETTERS PARA EL TEMPLATE --------------------
+
+  /**
+   * Obtiene las filas del preview (maneja rows y private_rows)
+   */
+  get previewRows(): ExcelPreviewRow[] {
+    if (!this.previewData) return [];
+    return this.previewData.rows || this.previewData.private_rows || [];
   }
 
   /**
-   * Suscribe al progreso de carga
+   * Cantidad de filas inválidas en el preview
    */
+  get invalidRowsCount(): number {
+    return this.previewRows.filter(r => !r.is_valid).length;
+  }
+
+  /**
+   * Verifica si hay errores en el preview
+   */
+  get hasPreviewErrors(): boolean {
+    return this.previewData?.has_errors ?? false;
+  }
+
+  /**
+   * Total de filas en el preview
+   */
+  get totalPreviewRows(): number {
+    return this.previewData?.total_rows ?? 0;
+  }
+
+  /**
+   * Verifica si se puede subir el archivo
+   */
+  get canUpload(): boolean {
+    return !!(this.previewData && !this.hasPreviewErrors && !this.isUploading);
+  }
+
+  /**
+   * Verifica si se puede previsualizar
+   */
+  get canPreview(): boolean {
+    return !!(this.selectedFile && !this.isLoadingPreview);
+  }
+
+  // -------------------- SUBSCRIPCIONES --------------------
+
   private subscribeToProgress(): void {
-    this.excelUploadService.uploadProgress$
+    this.excelUploadService.progress$
       .pipe(takeUntil(this.destroy$))
       .subscribe(progress => {
-        this.uploadProgress = progress;
+        console.log('Progreso WS:', progress);
+
+        if (progress.percentage !== undefined) {
+          this.uploadProgress = progress.percentage;
+        }
+
+        if (progress.status === 'completed') {
+          this.uploadComplete = true;
+          this.successMessage = `Carga completada: ${progress.successful} filas exitosas, ${progress.failed} fallidas.`;
+
+          setTimeout(() => {
+            this.loadUploadLogs();
+            this.resetUpload();
+          }, 2000);
+        }
+
+        if (progress.status === 'failed') {
+          this.errorMessage = progress.error || 'Error durante la carga';
+          this.isUploading = false;
+        }
       });
+
+    this.excelUploadService.uploadProgress$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(p => this.uploadProgress = p);
   }
 
-  /**
-   * Manejo de drag & drop
-   */
+  // -------------------- DRAG & DROP --------------------
+
   onDragOver(event: DragEvent): void {
     event.preventDefault();
-    event.stopPropagation();
     this.isDragging = true;
   }
 
   onDragLeave(event: DragEvent): void {
     event.preventDefault();
-    event.stopPropagation();
     this.isDragging = false;
   }
 
   onDrop(event: DragEvent): void {
     event.preventDefault();
-    event.stopPropagation();
     this.isDragging = false;
-
     const files = event.dataTransfer?.files;
-    if (files && files.length > 0) {
-      this.handleFileSelection(files[0]);
-    }
+    if (files?.length) this.handleFileSelection(files[0]);
   }
 
-  /**
-   * Manejo de selección de archivo
-   */
+  // -------------------- SELECCIÓN DE ARCHIVO --------------------
+
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      this.handleFileSelection(input.files[0]);
-    }
+    if (input.files?.length) this.handleFileSelection(input.files[0]);
   }
 
-  /**
-   * Procesa el archivo seleccionado
-   */
   private handleFileSelection(file: File): void {
+    console.log('Archivo seleccionado:', file)
     this.clearMessages();
     this.previewData = null;
-    
-    // Validar extensión
-    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
-      this.errorMessage = 'Por favor selecciona un archivo Excel (.xlsx o .xls)';
+
+    // Validar tipo
+    if (!/\.(xlsx|xls)$/i.test(file.name)) {
+      this.errorMessage = 'Selecciona un archivo Excel (.xlsx o .xls)';
       return;
     }
 
     // Validar tamaño (10MB)
     const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      this.errorMessage = 'El archivo excede el tamaño máximo de 10MB';
+      this.errorMessage = 'El archivo supera el tamaño máximo de 10MB';
+      console.log('Archivo muy grande:', file.size);
       return;
     }
 
     this.selectedFile = file;
-    this.loadPreview();
+    console.log('Archivo asignado a selectedFile:', this.selectedFile);
   }
 
-  /**
-   * Carga el preview de los datos
-   */
+  // -------------------- PREVISUALIZACIÓN --------------------
+
   loadPreview(): void {
     if (!this.selectedFile) return;
 
@@ -136,29 +195,28 @@ export class ExcelUploadComponent implements OnInit, OnDestroy {
         next: (response) => {
           this.previewData = response;
           this.isLoadingPreview = false;
-          
+
           if (response.has_errors) {
-            this.errorMessage = 'El archivo contiene errores de validación. Por favor revisa las filas marcadas en rojo.';
+            this.errorMessage = 'El archivo contiene errores. Revisa las filas marcadas en rojo.';
           } else {
-            this.successMessage = `Preview cargado correctamente. ${response.total_rows} filas detectadas.`;
+            this.successMessage = `Preview generado: ${response.total_rows} filas detectadas.`;
           }
         },
         error: (error) => {
           this.isLoadingPreview = false;
-          this.errorMessage = error.error?.detail || 'Error al cargar el preview del archivo';
-          console.error('Error loading preview:', error);
+          this.errorMessage = error.error?.detail || '❌ Error al generar el preview.';
+          console.error('Error preview:', error);
         }
       });
   }
 
-  /**
-   * Sube los datos a la base de datos
-   */
-  uploadData(): void {
-    if (!this.selectedFile || !this.previewData) return;
+  // -------------------- SUBIDA --------------------
 
-    if (this.previewData.has_errors) {
-      this.errorMessage = 'No se puede subir un archivo con errores de validación';
+  uploadData(): void {
+    if (!this.canUpload) {
+      if (this.hasPreviewErrors) {
+        this.errorMessage = '❌ No puedes subir un archivo con errores de validación.';
+      }
       return;
     }
 
@@ -166,148 +224,91 @@ export class ExcelUploadComponent implements OnInit, OnDestroy {
     this.uploadComplete = false;
     this.clearMessages();
 
-    this.excelUploadService.uploadExcel(this.selectedFile)
+    this.excelUploadService.uploadExcel(this.selectedFile!)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          if (response) {
-            this.isUploading = false;
-            this.uploadComplete = true;
-            this.successMessage = `¡Carga exitosa! Se procesarán ${response.total_rows} filas.`;
-            
-            // Recargar logs después de 2 segundos
-            setTimeout(() => {
-              this.loadUploadLogs();
-              this.resetUpload();
-            }, 2000);
-          }
+          this.isUploading = false;
+          this.uploadComplete = true;
+          this.successMessage = `Carga iniciada: ${response.total_rows} filas serán procesadas.`;
+
+          setTimeout(() => {
+            this.loadUploadLogs();
+            this.resetUpload();
+          }, 2000);
         },
         error: (error) => {
           this.isUploading = false;
-          this.errorMessage = error.error?.detail || 'Error al subir el archivo';
-          console.error('Error uploading file:', error);
+          this.errorMessage = error.error?.detail || '❌ Error al subir el archivo.';
+          console.error('Error upload:', error);
         }
       });
   }
 
-  /**
-   * Carga el historial de cargas
-   */
+  // -------------------- LOGS --------------------
+
   loadUploadLogs(): void {
     this.isLoadingLogs = true;
-    
     this.excelUploadService.getUploadLogs(50)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (logs) => {
+        next: logs => {
           this.uploadLogs = logs;
           this.isLoadingLogs = false;
         },
-        error: (error) => {
+        error: error => {
           this.isLoadingLogs = false;
-          console.error('Error loading logs:', error);
+          console.error('Error cargando logs:', error);
         }
       });
   }
 
-  /**
-   * Resetea el estado de carga
-   */
+  // -------------------- UTILIDADES --------------------
+
   resetUpload(): void {
     this.selectedFile = null;
     this.previewData = null;
     this.uploadProgress = 0;
     this.uploadComplete = false;
+    this.isUploading = false;
     this.excelUploadService.resetProgress();
   }
 
-  /**
-   * Limpia los mensajes
-   */
   clearMessages(): void {
     this.errorMessage = '';
     this.successMessage = '';
   }
 
-  /**
-   * Obtiene la clase CSS según el estado
-   */
   getStatusClass(status: string): string {
-    const statusClasses: { [key: string]: string } = {
-      'pending': 'status-pending',
-      'processing': 'status-processing',
-      'completed': 'status-completed',
-      'failed': 'status-failed'
+    const statusMap: Record<string, string> = {
+      pending: 'status-pending',
+      processing: 'status-processing',
+      completed: 'status-completed',
+      failed: 'status-failed'
     };
-    return statusClasses[status] || '';
+    return statusMap[status] || '';
   }
 
-  /**
-   * Obtiene el texto del estado en español
-   */
   getStatusText(status: string): string {
-    const statusTexts: { [key: string]: string } = {
-      'pending': 'Pendiente',
-      'processing': 'Procesando',
-      'completed': 'Completado',
-      'failed': 'Fallido'
+    const statusTextMap: Record<string, string> = {
+      pending: 'Pendiente',
+      processing: 'Procesando',
+      completed: 'Completado',
+      failed: 'Fallido'
     };
-    return statusTexts[status] || status;
+    return statusTextMap[status] || status;
   }
 
-  /**
-   * Descarga un template de Excel
-   */
+  // -------------------- DESCARGAR PLANTILLA --------------------
+
   downloadTemplate(): void {
-    // Aquí podrías generar un template o descargar uno predefinido
-    const csvContent = "name,email\nJuan Pérez,juan@example.com\nMaría García,maria@example.com";
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'template_usuarios.csv';
-    link.click();
-    window.URL.revokeObjectURL(url);
+    const csv = "name,email\nJuan Pérez,juan@example.com\nMaría García,maria@example.com";
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'template_usuarios.csv';
+    a.click();
+    URL.revokeObjectURL(url);
   }
-}
-
-ngOnInit(): void {
-  this.loadUploadLogs();
-  this.subscribeToProgress();
-  this.excelUploadService.connectWebSocket(); // Conectar WebSocket
-}
-
-ngOnDestroy(): void {
-  this.destroy$.next();
-  this.destroy$.complete();
-  this.excelUploadService.disconnectWebSocket(); // Desconectar
-}
-
-/**
- * Suscribe al progreso de WebSocket
- */
-private subscribeToProgress(): void {
-  this.excelUploadService.progress$
-    .pipe(takeUntil(this.destroy$))
-    .subscribe(progress => {
-      console.log('Progreso:', progress);
-      
-      if (progress.percentage) {
-        this.uploadProgress = progress.percentage;
-      }
-      
-      if (progress.status === 'completed') {
-        this.uploadComplete = true;
-        this.successMessage = `¡Carga completada! ${progress.successful} exitosos, ${progress.failed} fallidos`;
-        setTimeout(() => {
-          this.loadUploadLogs();
-          this.resetUpload();
-        }, 2000);
-      }
-      
-      if (progress.status === 'failed') {
-        this.errorMessage = progress.error || 'Error en la carga';
-        this.isUploading = false;
-      }
-    });
 }

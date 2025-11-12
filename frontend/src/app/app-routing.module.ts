@@ -15,7 +15,7 @@ const routes: Routes = [
   {
     path: 'excel-upload',
     loadChildren: () =>
-      import('./modules/excel-upload/excel-upload.module').then(m => m.ExcelUploadModule)
+      import('./modules/excel-upload/modules/excel-upload.module').then(m => m.ExcelUploadModule)
   }
 ];
 
