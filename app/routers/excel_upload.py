@@ -2,6 +2,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Backgro
 from sqlalchemy.orm import Session
 from typing import List
 import pandas as pd
+import asyncio
 
 from app.database import get_db
 from app.models import User, ExcelUploadLog, UploadStatusEnum
