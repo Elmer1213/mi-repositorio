@@ -15,6 +15,7 @@ export interface ExcelPreviewResponse {
   has_errors: boolean;
   rows: ExcelPreviewRow[];
   private_rows?: ExcelPreviewRow[];
+  sheet_name?: string
 }
 
 //Log de cargas
@@ -27,29 +28,54 @@ export interface UploadLog {
   successful_rows?: number;
   failed_rows?: number;
   error_message?: string;
-  uploaded_by?: string;
 }
 
 //Respuesta al subir Excel (backend -> frontend)
 export interface UploadResponse {
+  message: string;
+  upload_id: number;
   total_rows: number;
-  successful_rows: number;
-  failed_rows: number;
-  message?: string;
 }
 
 //Respuesta de validación de archivo
 export interface ValidationResponse {
-  valid: boolean;
-  errors?: string[];
-  sheet_names?: string[];
+  message: string;
+  filename: string;
+  size_ok: boolean;
+  file_id: string;
+  sheets: string[];
+  total_sheets: number;
 }
 
 //Progreso de subida en tiempo real (para WebSocket)
 export interface UploadProgress {
+  current?: number;
+  total?: number;
   percentage?: number;
-  status?: 'pending' | 'processing' | 'completed' | 'failed';
   successful?: number;
   failed?: number;
+  status?: 'processing' | 'completed' | 'failed' | 'connected';
   error?: string;
+  type?: string;
+  message?: string;
+}
+
+export interface SheetsResponse {
+  sheets: string[];
+  total: number;
+  filename: string;
+}
+
+export interface ChartData {
+  labels: string[];
+  successful: number[];
+  failed: number[];
+  dates: string[];
+}
+
+export interface UploadStats {
+  total_uploads: number;
+  total_successful: number;
+  total_failed: number;
+  chart_data: ChartData;
 }

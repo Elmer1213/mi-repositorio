@@ -4,10 +4,12 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule} from '@angular/forms';
+import { StatsComponent } from './components/stats/stats.component';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    StatsComponent
   ],
   imports: [
     BrowserModule,

@@ -1,0 +1,106 @@
+<div class="stats-container">
+  <!-- Header -->
+  <div class="header">
+    <h1><i class="fas fa-chart-bar"></i> Estadísticas de Cargas</h1>
+    <button class="btn btn-primary" (click)="refresh()" [disabled]="isLoading">
+      <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
+      Actualizar
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Cargando estadísticas...</p>
+  </div>
+
+  <!-- Sin datos -->
+  <div class="empty-state" *ngIf="!isLoading && !stats">
+    <i class="fas fa-chart-bar"></i>
+    <h3>No hay datos disponibles</h3>
+    <p>Realiza algunas cargas para ver las estadísticas</p>
+    <a routerLink="/upload" class="btn btn-primary">
+      <i class="fas fa-upload"></i>
+      Ir a Cargar Datos
+    </a>
+  </div>
+
+  <!-- Estadísticas -->
+  <div *ngIf="!isLoading && stats">
+    <!-- Cards de resumen -->
+    <div class="stats-cards">
+      <div class="stat-card card-primary">
+        <div class="card-icon">
+          <i class="fas fa-cloud-upload-alt"></i>
+        </div>
+        <div class="card-content">
+          <h3>{{ formatNumber(stats.total_uploads) }}</h3>
+          <p>Total de Cargas</p>
+        </div>
+      </div>
+
+      <div class="stat-card card-success">
+        <div class="card-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="card-content">
+          <h3>{{ formatNumber(stats.total_successful) }}</h3>
+          <p>Filas Exitosas</p>
+        </div>
+      </div>
+
+      <div class="stat-card card-danger">
+        <div class="card-icon">
+          <i class="fas fa-times-circle"></i>
+        </div>
+        <div class="card-content">
+          <h3>{{ formatNumber(stats.total_failed) }}</h3>
+          <p>Filas Fallidas</p>
+        </div>
+      </div>
+
+      <div class="stat-card card-info">
+        <div class="card-icon">
+          <i class="fas fa-percentage"></i>
+        </div>
+        <div class="card-content">
+          <h3>{{ getSuccessRate().toFixed(1) }}%</h3>
+          <p>Tasa de Éxito</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="charts-grid">
+      <!-- Gráfico de Barras -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3><i class="fas fa-chart-bar"></i> Comparación por Archivo</h3>
+        </div>
+        <div class="chart-body">
+          <canvas #barChartCanvas></canvas>
+        </div>
+      </div>
+
+      <!-- Gráfico de Líneas -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3><i class="fas fa-chart-line"></i> Tendencia Temporal</h3>
+        </div>
+        <div class="chart-body">
+          <canvas #lineChartCanvas></canvas>
+        </div>
+      </div>
+
+      <!-- Gráfico Circular -->
+      <div class="chart-card chart-card-small">
+        <div class="chart-header">
+          <h3><i class="fas fa-chart-pie"></i> Distribución General</h3>
+        </div>
+        <div class="chart-body">
+          <canvas #pieChartCanvas></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -16,7 +16,7 @@ import {
 export class ExcelUploadService {
 
   private apiUrl = 'http://localhost:8000/api/excel';
-  private wsUrl = 'ws://localhost:8000/ws/upload-progress';
+  private wsUrl = 'ws://localhost:8000/ws/progress';
   private socket: WebSocket | null = null;
 
   // Progreso local (HTTP)
@@ -27,7 +27,7 @@ export class ExcelUploadService {
   private progressSubject = new BehaviorSubject<UploadProgress>({});
   public progress$ = this.progressSubject.asObservable();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   // ======================================================
   // VALIDACIONES Y PREVISUALIZACIÓN
@@ -82,6 +82,9 @@ export class ExcelUploadService {
   // ======================================================
   //HISTORIAL DE CARGAS
   // ======================================================
+  getUploadStats(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/stats`);
+  }
 
   getUploadLogs(limit: number = 50): Observable<UploadLog[]> {
     return this.http.get<UploadLog[]>(`${this.apiUrl}/logs?limit=${limit}`);
@@ -142,3 +145,5 @@ export class ExcelUploadService {
     }
   }
 }
+
+
