@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { StatsComponent } from './modules/stats/stats.component';
 
 const routes: Routes = [
   {
@@ -16,6 +17,10 @@ const routes: Routes = [
     path: 'excel-upload',
     loadChildren: () =>
       import('./modules/excel-upload/modules/excel-upload.module').then(m => m.ExcelUploadModule)
+  },
+  {
+    path: 'stats',
+    component: StatsComponent
   }
 ];
 

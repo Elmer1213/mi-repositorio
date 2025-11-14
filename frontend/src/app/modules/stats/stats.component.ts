@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
-import { ExcelUploadService } from '../../modules/excel-upload/services/excel-upload.service';
+import { ExcelUploadService } from '../excel-upload/services/excel-upload.service';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 
 Chart.register(...registerables);
@@ -20,6 +20,7 @@ export class StatsComponent implements OnInit, AfterViewInit {
 
   stats: any = null;
   isLoading: boolean = false;
+  chartsReady: boolean = false;
 
   colors = {
     primary: '#3498db',
@@ -29,14 +30,17 @@ export class StatsComponent implements OnInit, AfterViewInit {
     info: '#16a085'
   };
 
-  constructor(private excelUploadService: ExcelUploadService) {}
+  constructor(private excelUploadService: ExcelUploadService) { }
 
   ngOnInit(): void {
     this.loadStats();
   }
 
   ngAfterViewInit(): void {
-    // Los gráficos se crean después de cargar los datos
+    this.chartsReady = true;
+    if (this.stats && this.stats.chart_data) {
+      setTimeout(() => this.createCharts(), 100);
+    }
   }
 
   loadStats(): void {
@@ -45,15 +49,18 @@ export class StatsComponent implements OnInit, AfterViewInit {
     this.excelUploadService.getUploadStats().subscribe({
       next: (data) => {
         console.log('📊 Estadísticas cargadas:', data);
+        console.log('📈 chart_data:', data.chart_data);
+
         this.stats = data;
         this.isLoading = false;
 
-        setTimeout(() => {
-          this.createCharts();
-        }, 100);
+        // Esperar a que los ViewChild estén disponibles
+        if (this.chartsReady) {
+          setTimeout(() => this.createCharts(), 100);
+        }
       },
       error: (error) => {
-        console.error('Error al cargar estadísticas:', error);
+        console.error('❌ Error al cargar estadísticas:', error);
         this.isLoading = false;
       }
     });
@@ -61,26 +68,52 @@ export class StatsComponent implements OnInit, AfterViewInit {
 
   createCharts(): void {
     if (!this.stats || !this.stats.chart_data) {
-      console.warn('No hay datos para crear gráficos');
+      console.warn('⚠️ No hay datos para crear gráficos');
+      console.log('stats:', this.stats);
       return;
     }
 
-    this.createBarChart();
-    this.createLineChart();
-    this.createPieChart();
+    console.log('🎨 Creando gráficos...');
+
+    try {
+      this.createBarChart();
+      this.createLineChart();
+      this.createPieChart();
+      console.log('✅ Gráficos creados exitosamente');
+    } catch (error) {
+      console.error('❌ Error al crear gráficos:', error);
+    }
   }
 
   createBarChart(): void {
-    if (!this.barChartCanvas || !this.stats) return;
+    if (!this.barChartCanvas) {
+      console.warn('⚠️ barChartCanvas no disponible');
+      return;
+    }
 
     const ctx = this.barChartCanvas.nativeElement.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      console.error('❌ No se pudo obtener el contexto del canvas');
+      return;
+    }
 
     if (this.barChart) {
       this.barChart.destroy();
     }
 
     const chartData = this.stats.chart_data;
+
+    // Validar que existan los datos necesarios
+    if (!chartData.labels || !chartData.successful || !chartData.failed) {
+      console.error('❌ Faltan datos para el gráfico de barras:', chartData);
+      return;
+    }
+
+    console.log('📊 Creando gráfico de barras con:', {
+      labels: chartData.labels,
+      successful: chartData.successful,
+      failed: chartData.failed
+    });
 
     const config: ChartConfiguration = {
       type: 'bar',
@@ -141,7 +174,10 @@ export class StatsComponent implements OnInit, AfterViewInit {
   }
 
   createLineChart(): void {
-    if (!this.lineChartCanvas || !this.stats) return;
+    if (!this.lineChartCanvas) {
+      console.warn('⚠️ lineChartCanvas no disponible');
+      return;
+    }
 
     const ctx = this.lineChartCanvas.nativeElement.getContext('2d');
     if (!ctx) return;
@@ -152,10 +188,18 @@ export class StatsComponent implements OnInit, AfterViewInit {
 
     const chartData = this.stats.chart_data;
 
+    // Usar dates si existe, sino usar labels
+    const labels = chartData.dates || chartData.labels;
+
+    if (!labels || !chartData.successful || !chartData.failed) {
+      console.error('❌ Faltan datos para el gráfico de líneas');
+      return;
+    }
+
     const config: ChartConfiguration = {
       type: 'line',
       data: {
-        labels: chartData.dates,
+        labels: labels,
         datasets: [
           {
             label: 'Filas Exitosas',
@@ -207,7 +251,10 @@ export class StatsComponent implements OnInit, AfterViewInit {
   }
 
   createPieChart(): void {
-    if (!this.pieChartCanvas || !this.stats) return;
+    if (!this.pieChartCanvas) {
+      console.warn('⚠️ pieChartCanvas no disponible');
+      return;
+    }
 
     const ctx = this.pieChartCanvas.nativeElement.getContext('2d');
     if (!ctx) return;
@@ -253,7 +300,7 @@ export class StatsComponent implements OnInit, AfterViewInit {
     if (this.barChart) this.barChart.destroy();
     if (this.lineChart) this.lineChart.destroy();
     if (this.pieChart) this.pieChart.destroy();
-    
+
     this.loadStats();
   }
 

@@ -7,11 +7,7 @@ from app.database import engine, Base
 from app.models import User, ExcelUploadLog
 from app.routers import users, health, excel_upload
 from app.utils.logger_config import logger
-
-#---------------------------
-# Crear tablas si no existen
-#--------------------------
-Base.metadata.create_all(bind=engine)
+import time
 
 app = FastAPI(
     title="Sistema de Gestión de Usuarios - SENA",
@@ -74,16 +70,46 @@ async def websocket_progress_endpoint(websocket: WebSocket):
 
 @app.on_event("startup")
 async def startup_event():
+    
+    """Inicializar aplicación y conectar a base de datos"""
+    
     logger.info("=" * 60)
     logger.info("Aplicación FastAPI iniciada")
-    logger.info(f"WebSocket Manager: {websocket_manager}")
     logger.info("=" * 60)
-
+    
+    #Intentar conectar a la base de datos con reintentos
+    logger.info("Intentanto conectar a la base de datos")
+    max_retries = 30
+    retry_delay = 2
+    
+    for attempt in range(1, max_retries + 1):
+        try:
+            #Intentar crear/verificar tablas
+            Base.metadata.create_all(bind=engine)
+            logger.info("Conexión de base de datos exitosa")
+            logger.info("Tabla creadas/verificadas correctamente")
+            break
+        except Exception as e:
+            if attempt < max_retries:
+                logger.warning(f"Intento {attempt}/{max_retries}: "
+                               f"Espera que MySQL esté lista... (reintentando en {retry_delay}s)")
+                time.sleep(retry_delay)
+            else:
+                logger.error(f"No se pudo conectar a la base de datos despues de {max_retries} intentos")
+                logger.error(f"Error: {str(e)}")
+                raise Exception(f"Error fatal: No se puede establecer conexión con la base de datos. " f"Verifica que el servicio MySQL este corriendo y la credenciales sean correctas")
+    
+    logger.info("=" *  60)
+    logger.info("Aplicación FastAPI iniciada correctamente")
+    logger.info(f"WebSockect Manager: {websocket_manager}")
+    logger.info("= * 60")
+            
 
 @app.on_event("shutdown")
 async def shutdown_event():
     logger.info("Cerrando aplicación...")
     await websocket_manager.disconnect_all()
+    logger.info("Aplicación cerrada correctamente")
 
 #--------------------------
 #         Routers

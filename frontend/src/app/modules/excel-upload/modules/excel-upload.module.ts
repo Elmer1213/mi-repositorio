@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Routes } from '@angular/router';
 import { ExcelUploadRoutingModule } from './excel-upload-routing.module';
 import { ExcelUploadComponent } from '../components/excel-upload/excel-upload.component';
-import { StatsComponent } from '../../../components/stats/stats.component';
+import { StatsComponent } from '../../stats/stats.component';
 
 
 const routes: Routes = [

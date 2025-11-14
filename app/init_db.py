@@ -10,7 +10,7 @@ from app.utils.logger_config import logger
 
 def init_database():
     
-    """Crea todas las tabals en al base de datos"""
+    """Crea todas las tablas en al base de datos"""
     
     try:
         logger.info("Inicializando base de datos")

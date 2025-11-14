@@ -1,8 +1,11 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, BackgroundTasks
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List
 import pandas as pd
 import asyncio
+from datetime import datetime
+
 
 from app.database import get_db
 from app.models import User, ExcelUploadLog, UploadStatusEnum
@@ -137,6 +140,105 @@ async def upload_excel_data(
         raise HTTPException(status_code=500, detail="Error al procesar el archivo")
 
 
+# ============================================
+# NUEVO ENDPOINT: ESTADÍSTICAS
+# ============================================
+@router.get("/stats")
+async def get_upload_stats(db: Session = Depends(get_db)):
+    """
+    Obtiene estadísticas de las cargas de Excel
+    
+    Returns:
+        - total_uploads: Número total de cargas
+        - total_successful: Total de filas exitosas
+        - total_failed: Total de filas fallidas
+        - chart_data: Datos para gráficos (últimas 10 cargas)
+    """
+    try:
+        logger.info("📊 Obteniendo estadísticas de cargas...")
+        
+        # Estadísticas totales
+        total_uploads = db.query(func.count(ExcelUploadLog.id)).scalar() or 0
+        total_successful = db.query(func.sum(ExcelUploadLog.successful_rows)).scalar() or 0
+        total_failed = db.query(func.sum(ExcelUploadLog.failed_rows)).scalar() or 0
+        
+        logger.info(f"Total uploads: {total_uploads}, Exitosas: {total_successful}, Fallidas: {total_failed}")
+        
+        # Últimas 10 cargas para los gráficos
+        recent_uploads = (
+            db.query(ExcelUploadLog)
+            .order_by(ExcelUploadLog.uploaded_at.desc())
+            .limit(10)
+            .all()
+        )
+        
+        # Construir datos para gráficos
+        chart_data = {
+            'labels': [],
+            'successful': [],
+            'failed': [],
+            'dates': []
+        }
+        
+        # Invertir para orden cronológico (más antiguo al más nuevo)
+        for upload in reversed(recent_uploads):
+            # Usar filename o un identificador
+            label = upload.filename if upload.filename else f'Carga #{upload.id}'
+            chart_data['labels'].append(label)
+            chart_data['successful'].append(upload.successful_rows or 0)
+            chart_data['failed'].append(upload.failed_rows or 0)
+            
+            # Formatear fecha (usa uploaded_at según tu modelo)
+            if upload.uploaded_at:
+                date_str = upload.uploaded_at.strftime('%Y-%m-%d')
+            else:
+                date_str = datetime.now().strftime('%Y-%m-%d')
+            chart_data['dates'].append(date_str)
+        
+        logger.info(f"📊 Datos de gráficos: {len(chart_data['labels'])} cargas")
+        
+        response = {
+            'total_uploads': int(total_uploads),
+            'total_successful': int(total_successful) if total_successful else 0,
+            'total_failed': int(total_failed) if total_failed else 0,
+            'chart_data': chart_data
+        }
+        
+        logger.info(f"✅ Estadísticas obtenidas exitosamente")
+        return response
+        
+    except Exception as e:
+        logger.error(f"❌ Error al obtener estadísticas: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al obtener estadísticas: {str(e)}"
+        )
+# ============================================
+
+
+@router.get("/logs", response_model=List[UploadLogResponse])
+async def get_upload_logs(
+    limit: int = 50,
+    db: Session = Depends(get_db)
+):
+    """
+    Obtiene el historial de cargas
+    """
+    logs = db.query(ExcelUploadLog).order_by(ExcelUploadLog.uploaded_at.desc()).limit(limit).all()
+    return logs
+
+
+@router.get("/logs/{upload_id}", response_model=UploadLogResponse)
+async def get_upload_log(upload_id: int, db: Session = Depends(get_db)):
+    """
+    Obtiene el detalle de una carga específica
+    """
+    log = db.query(ExcelUploadLog).filter(ExcelUploadLog.id == upload_id).first()
+    if not log:
+        raise HTTPException(status_code=404, detail="Log no encontrado")
+    return log
+
+
 def process_excel_data(df: pd.DataFrame, upload_log_id: int, db: Session):
     """
     Procesa los datos del Excel e inserta en la base de datos
@@ -193,28 +295,6 @@ def process_excel_data(df: pd.DataFrame, upload_log_id: int, db: Session):
             upload_log.error_message = str(e)
             db.commit()
 
-
-@router.get("/logs", response_model=List[UploadLogResponse])
-async def get_upload_logs(
-    limit: int = 50,
-    db: Session = Depends(get_db)
-):
-    """
-    Obtiene el historial de cargas
-    """
-    logs = db.query(ExcelUploadLog).order_by(ExcelUploadLog.uploaded_at.desc()).limit(limit).all()
-    return logs
-
-
-@router.get("/logs/{upload_id}", response_model=UploadLogResponse)
-async def get_upload_log(upload_id: int, db: Session = Depends(get_db)):
-    """
-    Obtiene el detalle de una carga específica
-    """
-    log = db.query(ExcelUploadLog).filter(ExcelUploadLog.id == upload_id).first()
-    if not log:
-        raise HTTPException(status_code=404, detail="Log no encontrado")
-    return log
 
 async def process_excel_data_with_progress(
     df: pd.DataFrame, 
