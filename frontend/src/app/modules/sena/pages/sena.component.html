@@ -1,101 +1,360 @@
-<div class="container">
-  <h2><i class="fas fa-users"></i> Gestión de Usuarios - SENA</h2>
+<div class="app-container">
+  <!-- HEADER CON NAVEGACIÓN -->
+  <header class="app-header">
+    <div class="header-content">
+      <div class="logo-section">
+        <i class="fas fa-graduation-cap"></i>
+        <h1>SENA - Sistema de Usuarios</h1>
+      </div>
+      <nav class="main-nav">
+        <button class="nav-btn active">
+          <i class="fas fa-users"></i>
+          <span>Usuarios</span>
+        </button>
+        <button class="nav-btn">
+          <i class="fas fa-chart-line"></i>
+          <span>Estadísticas</span>
+        </button>
+        <button class="nav-btn">
+          <i class="fas fa-cog"></i>
+          <span>Configuración</span>
+        </button>
+      </nav>
+      <div class="user-profile">
+        <i class="fas fa-user-circle"></i>
+        <span>Admin</span>
+      </div>
+    </div>
+  </header>
 
-  <!-- FORMULARIO -->
-  <form (ngSubmit)="saveUser()" #userForm="ngForm" class="form">
-    <div class="form-group">
-      <label for="name">Nombre completo:</label>
-      <input
-        id="name"
-        type="text"
-        name="name"
-        [(ngModel)]="newUser.name"
-        placeholder="Ej: Juan Pérez"
-        required
-      />
-      <small *ngIf="!newUser.name && userForm.submitted" class="error-msg">
-        El nombre es obligatorio.
-      </small>
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="main-content">
+    <!-- BARRA DE ESTADÍSTICAS -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ users.length }}</h3>
+          <p>Total Usuarios</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon active">
+          <i class="fas fa-user-check"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ users.length }}</h3>
+          <p>Activos</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon pending">
+          <i class="fas fa-user-clock"></i>
+        </div>
+        <div class="stat-info">
+          <h3>0</h3>
+          <p>Pendientes</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon new">
+          <i class="fas fa-user-plus"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ getNewUsersThisMonth() }}</h3>
+          <p>Este Mes</p>
+        </div>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label for="email">Correo electrónico:</label>
-      <input
-        id="email"
-        type="email"
-        name="email"
-        [(ngModel)]="newUser.email"
-        placeholder="correo@ejemplo.com"
-        required
-      />
-      <small *ngIf="!newUser.email && userForm.submitted" class="error-msg">
-        El correo es obligatorio.
-      </small>
+    <!-- SECCIÓN DE FORMULARIO -->
+    <div class="card form-card" [class.editing]="editingUser">
+      <div class="card-header">
+        <h2>
+          <i class="fas" [ngClass]="editingUser ? 'fa-user-edit' : 'fa-user-plus'"></i>
+          {{ editingUser ? 'Editar Usuario' : 'Nuevo Usuario' }}
+        </h2>
+        <button *ngIf="editingUser" class="btn-close" (click)="cancelEdit()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <form (ngSubmit)="saveUser()" #userForm="ngForm" class="modern-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name">
+              <i class="fas fa-user"></i>
+              Nombre completo
+            </label>
+            <input
+              id="name"
+              type="text"
+              name="name"
+              [(ngModel)]="newUser.name"
+              placeholder="Ej: Juan Pérez García"
+              required
+              class="form-control"
+            />
+            <small *ngIf="!newUser.name && userForm.submitted" class="error-msg">
+              <i class="fas fa-exclamation-circle"></i>
+              El nombre es obligatorio
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label for="email">
+              <i class="fas fa-envelope"></i>
+              Correo electrónico
+            </label>
+            <input
+              id="email"
+              type="email"
+              name="email"
+              [(ngModel)]="newUser.email"
+              placeholder="correo@ejemplo.com"
+              required
+              class="form-control"
+            />
+            <small *ngIf="!newUser.email && userForm.submitted" class="error-msg">
+              <i class="fas fa-exclamation-circle"></i>
+              El correo es obligatorio
+            </small>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="!userForm.form.valid"
+          >
+            <i class="fas" [ngClass]="editingUser ? 'fa-save' : 'fa-plus-circle'"></i>
+            {{ editingUser ? 'Guardar Cambios' : 'Agregar Usuario' }}
+          </button>
+          
+          <button
+            *ngIf="editingUser"
+            type="button"
+            class="btn btn-secondary"
+            (click)="cancelEdit()"
+          >
+            <i class="fas fa-times-circle"></i>
+            Cancelar
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-outline"
+            (click)="resetForm(userForm)"
+          >
+            <i class="fas fa-redo"></i>
+            Limpiar
+          </button>
+        </div>
+      </form>
     </div>
 
-    <div class="form-buttons">
-      <button
-        type="submit"
-        class="btn btn-primary"
-        [disabled]="!userForm.form.valid"
-      >
-        <i
-          class="fas"
-          [ngClass]="editingUser ? 'fa-sync-alt' : 'fa-user-plus'"
-        ></i>
-        {{ editingUser ? 'Actualizar Usuario' : 'Agregar Usuario' }}
-      </button>
+    <!-- SECCIÓN DE TABLA -->
+    <div class="card table-card">
+      <div class="card-header">
+        <h2>
+          <i class="fas fa-list"></i>
+          Usuarios Registrados
+        </h2>
+        <div class="header-actions">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input
+              type="text"
+              placeholder="Buscar usuarios..."
+              [(ngModel)]="searchTerm"
+              (ngModelChange)="filterUsers()"
+            />
+          </div>
+          <button class="btn btn-icon" title="Exportar">
+            <i class="fas fa-download"></i>
+          </button>
+          <button class="btn btn-icon" title="Imprimir">
+            <i class="fas fa-print"></i>
+          </button>
+          <button class="btn btn-icon" title="Actualizar" (click)="getUsers()">
+            <i class="fas fa-sync-alt"></i>
+          </button>
+        </div>
+      </div>
 
-      <button
-        *ngIf="editingUser"
-        type="button"
-        class="btn btn-secondary"
-        (click)="cancelEdit()"
-      >
-        <i class="fas fa-times"></i> Cancelar
-      </button>
+      <!-- FILTROS -->
+      <div class="filters-bar">
+        <button class="filter-btn active" (click)="setFilter('all')">
+          <i class="fas fa-users"></i>
+          Todos ({{ users.length }})
+        </button>
+        <button class="filter-btn" (click)="setFilter('recent')">
+          <i class="fas fa-clock"></i>
+          Recientes
+        </button>
+        <button class="filter-btn" (click)="setFilter('az')">
+          <i class="fas fa-sort-alpha-down"></i>
+          A-Z
+        </button>
+      </div>
+
+      <!-- TABLA -->
+      <div *ngIf="paginatedUsers.length > 0; else noUsers" class="table-container">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th width="80">
+                <input type="checkbox" class="checkbox" />
+              </th>
+              <th width="80">ID</th>
+              <th>
+                <div class="th-content">
+                  <span>Nombre</span>
+                  <i class="fas fa-sort"></i>
+                </div>
+              </th>
+              <th>
+                <div class="th-content">
+                  <span>Correo Electrónico</span>
+                  <i class="fas fa-sort"></i>
+                </div>
+              </th>
+              <th width="100">Estado</th>
+              <th width="180">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of paginatedUsers; let i = index" class="table-row">
+              <td>
+                <input type="checkbox" class="checkbox" />
+              </td>
+              <td>
+                <span class="user-id">{{ user.id }}</span>
+              </td>
+              <td>
+                <div class="user-info">
+                  <div class="avatar">{{ getInitials(user.name) }}</div>
+                  <span class="user-name">{{ user.name }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="user-email">{{ user.email }}</span>
+              </td>
+              <td>
+                <span class="badge badge-success">
+                  <i class="fas fa-check-circle"></i>
+                  Activo
+                </span>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <button
+                    class="btn-action btn-edit"
+                    (click)="editUser(user)"
+                    title="Editar"
+                  >
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button
+                    class="btn-action btn-view"
+                    title="Ver detalles"
+                  >
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button
+                    class="btn-action btn-delete"
+                    (click)="deleteUser(user.id)"
+                    title="Eliminar"
+                  >
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- PAGINACIÓN -->
+      <div *ngIf="filteredUsers.length > 0" class="pagination-container">
+        <div class="pagination-info">
+          Mostrando {{ getStartIndex() + 1 }} - {{ getEndIndex() }} de {{ filteredUsers.length }} usuarios
+        </div>
+        
+        <div class="pagination">
+          <button
+            class="pagination-btn"
+            [disabled]="currentPage === 1"
+            (click)="goToPage(1)"
+          >
+            <i class="fas fa-angle-double-left"></i>
+          </button>
+          <button
+            class="pagination-btn"
+            [disabled]="currentPage === 1"
+            (click)="previousPage()"
+          >
+            <i class="fas fa-angle-left"></i>
+          </button>
+          
+          <button
+            *ngFor="let page of getPageNumbers()"
+            class="pagination-btn"
+            [class.active]="page === currentPage"
+            (click)="goToPage(page)"
+          >
+            {{ page }}
+          </button>
+          
+          <button
+            class="pagination-btn"
+            [disabled]="currentPage === getTotalPages()"
+            (click)="nextPage()"
+          >
+            <i class="fas fa-angle-right"></i>
+          </button>
+          <button
+            class="pagination-btn"
+            [disabled]="currentPage === getTotalPages()"
+            (click)="goToPage(getTotalPages())"
+          >
+            <i class="fas fa-angle-double-right"></i>
+          </button>
+        </div>
+
+        <div class="page-size-selector">
+          <label>Mostrar:</label>
+          <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+            <option [value]="5">5</option>
+            <option [value]="10">10</option>
+            <option [value]="25">25</option>
+            <option [value]="50">50</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- MENSAJE SI NO HAY USUARIOS -->
+      <ng-template #noUsers>
+        <div class="empty-state">
+          <div class="empty-icon">
+            <i class="fas fa-users-slash"></i>
+          </div>
+          <h3>No hay usuarios registrados</h3>
+          <p>Comienza agregando tu primer usuario usando el formulario de arriba.</p>
+          <button class="btn btn-primary" (click)="scrollToForm()">
+            <i class="fas fa-plus-circle"></i>
+            Agregar Usuario
+          </button>
+        </div>
+      </ng-template>
     </div>
-  </form>
+  </main>
 
-  <hr />
-
-  <!-- LISTA DE USUARIOS -->
-  <div *ngIf="users.length > 0; else noUsers">
-    <h3><i class="fas fa-list"></i> Usuarios Registrados</h3>
-
-    <table class="user-table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Nombre</th>
-          <th>Correo electrónico</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let user of users">
-          <td>{{ user.id }}</td>
-          <td>{{ user.name }}</td>
-          <td>{{ user.email }}</td>
-          <td>
-            <button (click)="editUser(user)" class="btn-edit" title="Editar">
-              <i class="fas fa-edit"></i>
-            </button>
-            <button
-              (click)="deleteUser(user.id)"
-              class="btn-delete"
-              title="Eliminar"
-            >
-              <i class="fas fa-trash-alt"></i>
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- MENSAJE SI NO HAY USUARIOS -->
-  <ng-template #noUsers>
-    <p class="no-users"><i class="fas fa-info-circle"></i> No hay usuarios registrados.</p>
-  </ng-template>
+  <!-- FOOTER -->
+  <footer class="app-footer">
+    <p>© 2025 SENA - Servicio Nacional de Aprendizaje | Todos los derechos reservados</p>
+  </footer>
 </div>

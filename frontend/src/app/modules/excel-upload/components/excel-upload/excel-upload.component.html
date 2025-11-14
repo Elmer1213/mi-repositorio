@@ -1,109 +1,263 @@
 <div class="excel-upload-container">
-  <!-- ==============================
-   Subida de Archivo
-   ============================== -->
-  <div
-    class="drop-zone"
-    [class.dragging]="isDragging"
-    (dragover)="onDragOver($event)"
-    (dragleave)="onDragLeave($event)"
-    (drop)="onDrop($event)"
-  >
-    <p *ngIf="!selectedFile">Arrastra o selecciona un archivo Excel (.xlsx / .xls)</p>
-    <p *ngIf="selectedFile">📄 Archivo seleccionado: {{ selectedFile.name }}</p>
-    <input type="file" accept=".xlsx,.xls" (change)="onFileSelected($event)" hidden #fileInput />
-    <button (click)="fileInput.click()">Seleccionar archivo</button>
+  
+  <!-- HEADER -->
+  <div class="header">
+    <h1>
+      <i class="fas fa-file-excel"></i>
+      Carga Masiva de Usuarios
+    </h1>
+    <p class="subtitle">Importa múltiples usuarios desde un archivo Excel</p>
   </div>
 
-  <!-- 🔹 CAMBIO 1: Usa los nuevos getters canPreview y canUpload -->
-  <div class="actions">
-    <button (click)="loadPreview()" [disabled]="!canPreview">🔍 Previsualizar</button>
-    <button (click)="uploadData()" [disabled]="!canUpload">Subir</button>
-    <button (click)="downloadTemplate()">📥 Descargar plantilla</button>
-  </div>
-
-  <!-- ==============================
-   Mensajes
-   ============================== -->
-  <div class="messages">
-    <div class="error" *ngIf="errorMessage">{{ errorMessage }}</div>
-    <div class="success" *ngIf="successMessage">{{ successMessage }}</div>
-  </div>
-
-  <!-- ==============================
-  Progreso
-  ============================== -->
-  <div class="progress" *ngIf="isUploading">
-    <p>Progreso: {{ uploadProgress }}%</p>
-    <div class="bar">
-      <div class="fill" [style.width.%]="uploadProgress"></div>
+  <!-- MENSAJES -->
+  <div class="messages" *ngIf="errorMessage || successMessage">
+    <div class="alert alert-error" *ngIf="errorMessage">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ errorMessage }}
+    </div>
+    <div class="alert alert-success" *ngIf="successMessage">
+      <i class="fas fa-check-circle"></i>
+      {{ successMessage }}
     </div>
   </div>
 
-  <!-- ==============================
-  Vista previa del Excel
-  ============================== -->
-  <div *ngIf="previewData" class="preview-section">
-    <h3>Vista previa del archivo</h3>
+  <!-- SECCIÓN DE CARGA -->
+  <div class="upload-section">
+    <div class="card">
+      <div class="card-header">
+        <h2>
+          <i class="fas fa-cloud-upload-alt"></i>
+          Seleccionar Archivo
+        </h2>
+      </div>
 
-    <!-- 🔹 CAMBIO 2: Usa totalPreviewRows, hasPreviewErrors e invalidRowsCount -->
-    <div class="preview-stats">
-      <span class="stat">Total filas: {{ totalPreviewRows }}</span>
-      <span class="stat" [class.error]="hasPreviewErrors">
-        Errores detectados: {{ invalidRowsCount }}
-      </span>
+      <div class="card-body">
+        <!-- DROP ZONE -->
+        <div
+          class="drop-zone"
+          [class.dragging]="isDragging"
+          [class.has-file]="selectedFile"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onDrop($event)"
+          (click)="fileInput.click()"
+        >
+          <div class="drop-zone-content" *ngIf="!selectedFile">
+            <i class="fas fa-cloud-upload-alt icon"></i>
+            <h3 class="title">Arrastra tu archivo aquí</h3>
+            <p class="subtitle">o haz clic para seleccionar</p>
+            <p class="info">Formatos aceptados: .xlsx, .xls (máx. 10MB)</p>
+          </div>
+
+          <div class="file-info" *ngIf="selectedFile">
+            <i class="fas fa-file-excel icon"></i>
+            <h3 class="filename">{{ selectedFile.name }}</h3>
+            <p class="filesize">{{ (selectedFile.size / 1024 / 1024).toFixed(2) }} MB</p>
+            <button 
+              class="btn-remove" 
+              (click)="resetUpload(); $event.stopPropagation()"
+              type="button"
+            >
+              <i class="fas fa-times"></i>
+              Remover archivo
+            </button>
+          </div>
+
+          <input 
+            type="file" 
+            accept=".xlsx,.xls" 
+            (change)="onFileSelected($event)" 
+            hidden 
+            #fileInput 
+          />
+        </div>
+
+        <!-- ACCIONES -->
+        <div class="actions">
+          <button 
+            class="btn btn-secondary" 
+            (click)="loadPreview()" 
+            [disabled]="!canPreview"
+            type="button"
+          >
+            <i class="fas fa-eye"></i>
+            Previsualizar
+          </button>
+          <button 
+            class="btn btn-primary btn-large" 
+            (click)="uploadData()" 
+            [disabled]="!canUpload"
+            type="button"
+          >
+            <i class="fas fa-upload"></i>
+            Subir Archivo
+          </button>
+          <button 
+            class="btn btn-outline" 
+            (click)="downloadTemplate()"
+            type="button"
+          >
+            <i class="fas fa-download"></i>
+            Descargar Plantilla
+          </button>
+        </div>
+      </div>
     </div>
-
-    <table class="preview-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Nombre</th>
-          <th>Correo</th>
-          <th>Estado</th>
-          <th>Errores</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- 🔹 CAMBIO: Usa previewRows en lugar de previewData.rows -->
-        <tr *ngFor="let row of previewRows" [class.invalid]="!row.is_valid">
-          <td>{{ row.row_number || '-' }}</td>
-          <td>{{ row.name || '—' }}</td>
-          <td>{{ row.email || '—' }}</td>
-          <td>{{ row.is_valid ? 'Válido' : 'Inválido' }}</td>
-          <td>
-            <!-- 🔹 CAMBIO 3: Sintaxis correcta para validar errores -->
-            <ul class="error-list" *ngIf="row.errors && row.errors.length > 0">
-              <li *ngFor="let error of row.errors">{{ error }}</li>
-            </ul>
-          </td>
-        </tr>
-      </tbody>
-    </table>
   </div>
 
-  <!-- ==============================
-  Historial de cargas
-  ============================== -->
-  <div class="upload-history">
-    <h3>Historial de cargas</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Archivo</th>
-          <th>Fecha</th>
-          <th>Estado</th>
-          <th>Filas</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let log of uploadLogs">
-          <td>{{ log.filename }}</td>
-          <td>{{ log.uploaded_at | date: 'short' }}</td>
-          <td [class]="getStatusClass(log.status.toLowerCase())">{{ getStatusText(log.status.toLowerCase()) }}</td>
-          <td>{{ log.total_rows || '-' }}</td>
-        </tr>
-      </tbody>
-    </table>
+  <!-- PROGRESO DE CARGA -->
+  <div class="progress-section" *ngIf="isUploading || uploadComplete">
+    <div class="card">
+      <div class="card-body">
+        <h3 style="margin-bottom: 1rem; color: #0b4f3d;">
+          <i class="fas fa-spinner fa-spin" *ngIf="!uploadComplete"></i>
+          <i class="fas fa-check-circle" *ngIf="uploadComplete" style="color: #28a745;"></i>
+          {{ uploadComplete ? 'Carga Completada' : 'Procesando archivo...' }}
+        </h3>
+        
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="uploadProgress">
+            <span class="progress-text">{{ uploadProgress }}%</span>
+          </div>
+        </div>
+
+        <p style="text-align: center; margin-top: 1rem; color: #6c757d;">
+          {{ uploadProgress < 100 ? 'Cargando datos al servidor...' : '¡Importación exitosa!' }}
+        </p>
+      </div>
+    </div>
   </div>
+
+  <!-- VISTA PREVIA -->
+  <div class="preview-section" *ngIf="previewData && !isLoadingPreview">
+    <div class="card">
+      <div class="preview-header">
+        <h2>
+          <i class="fas fa-table"></i>
+          Vista Previa del Archivo
+        </h2>
+        <div class="stats">
+          <div class="stat">
+            <i class="fas fa-list-ol"></i>
+            <strong>Total:</strong> {{ totalPreviewRows }} registros
+          </div>
+          <div class="stat" [class.error]="hasPreviewErrors">
+            <i class="fas fa-exclamation-triangle" *ngIf="hasPreviewErrors"></i>
+            <i class="fas fa-check-circle" *ngIf="!hasPreviewErrors"></i>
+            <strong>Errores:</strong> {{ invalidRowsCount }}
+          </div>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="preview-table">
+          <thead>
+            <tr>
+              <th width="60">#</th>
+              <th>Nombre</th>
+              <th>Correo Electrónico</th>
+              <th width="120">Estado</th>
+              <th width="300">Errores</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr 
+              *ngFor="let row of previewRows" 
+              [class.row-error]="!row.is_valid"
+              [class.row-success]="row.is_valid"
+            >
+              <td>{{ row.row_number || '—' }}</td>
+              <td>{{ row.name || '—' }}</td>
+              <td>{{ row.email || '—' }}</td>
+              <td class="status-cell">
+                <span class="status-badge" [class.valid]="row.is_valid">
+                  <i class="fas" [ngClass]="row.is_valid ? 'fa-check-circle' : 'fa-times-circle'"></i>
+                  {{ row.is_valid ? 'Válido' : 'Inválido' }}
+                </span>
+              </td>
+              <td>
+                <ul class="error-list" *ngIf="row.errors && row.errors.length > 0">
+                  <li *ngFor="let error of row.errors">
+                    <i class="fas fa-exclamation-circle"></i>
+                    {{ error }}
+                  </li>
+                </ul>
+                <span *ngIf="!row.errors || row.errors.length === 0" style="color: #28a745;">
+                  <i class="fas fa-check"></i>
+                  Sin errores
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOADING PREVIEW -->
+  <div class="loading" *ngIf="isLoadingPreview">
+    <div class="spinner"></div>
+    <p>Analizando archivo Excel...</p>
+  </div>
+
+  <!-- HISTORIAL DE CARGAS -->
+  <div class="logs-section" *ngIf="uploadLogs.length > 0">
+    <div class="card">
+      <div class="logs-header">
+        <h2>
+          <i class="fas fa-history"></i>
+          Historial de Cargas
+        </h2>
+        <button class="btn btn-outline btn-sm" (click)="loadUploadLogs()" type="button">
+          <i class="fas fa-sync-alt"></i>
+          Actualizar
+        </button>
+      </div>
+
+      <div class="table-container">
+        <table class="logs-table">
+          <thead>
+            <tr>
+              <th>Archivo</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+              <th>Total Filas</th>
+              <th>Exitosas</th>
+              <th>Fallidas</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let log of uploadLogs">
+              <td>
+                <i class="fas fa-file-excel" style="color: #28a745; margin-right: 0.5rem;"></i>
+                {{ log.filename }}
+              </td>
+              <td>{{ log.uploaded_at | date: 'dd/MM/yyyy, h:mm a' }}</td>
+              <td>
+                <span class="status-badge" [ngClass]="getStatusClass(log.status.toLowerCase())">
+                  {{ getStatusText(log.status.toLowerCase()) }}
+                </span>
+              </td>
+              <td>{{ log.total_rows || '—' }}</td>
+              <td class="success-text">{{ log.successful_rows || 0 }}</td>
+              <td class="error-text">{{ log.failed_rows || 0 }}</td>
+            </tr>
+            <tr *ngIf="uploadLogs.length === 0">
+              <td colspan="6" class="no-data">
+                <i class="fas fa-inbox" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem;"></i>
+                <p>No hay cargas registradas</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOADING LOGS -->
+  <div class="loading" *ngIf="isLoadingLogs">
+    <div class="spinner"></div>
+    <p>Cargando historial...</p>
+  </div>
+
 </div>
