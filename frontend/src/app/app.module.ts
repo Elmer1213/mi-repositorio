@@ -5,11 +5,13 @@ import { AppComponent } from './app.component';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { StatsComponent } from './modules/stats/stats.component';
+import { NavbarComponent } from './modules/shared/navbar/navbar.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    StatsComponent
+    StatsComponent,
+    NavbarComponent
   ],
   imports: [
     BrowserModule,

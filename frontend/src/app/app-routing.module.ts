@@ -20,7 +20,9 @@ const routes: Routes = [
   },
   {
     path: 'stats',
-    component: StatsComponent
+    loadChildren: () =>
+      import('./modules/stats/stats.module')
+        .then(m => m.StatsModule)
   }
 ];
 
