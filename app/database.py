@@ -13,7 +13,7 @@ Base = declarative_base()
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    raise ValueError("❌ No se encontró DATABASE_URL en las variables de entorno")
+    raise ValueError("No se encontró DATABASE_URL en las variables de entorno")
 
 # Crear motor de conexión
 engine = create_engine(DATABASE_URL, echo=True)

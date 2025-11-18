@@ -595,16 +595,18 @@ body {
   }
   
   .btn-action {
-    width: 36px;
-    height: 36px;
+    padding: 6px 14px;
+    width: auto;
+    height: auto;
     border: none;
-    border-radius: 8px;
+    border-radius: 12px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
     font-size: 0.9rem;
+    font-weight: 500;
     
     &.btn-edit {
       background: rgba($info-color, 0.1);
@@ -613,7 +615,7 @@ body {
       &:hover {
         background: $info-color;
         color: $white;
-        transform: scale(1.1);
+        transform: scale(1.05);
       }
     }
     
@@ -624,7 +626,7 @@ body {
       &:hover {
         background: $text-muted;
         color: $white;
-        transform: scale(1.1);
+        transform: scale(1.05);
       }
     }
     
@@ -635,7 +637,7 @@ body {
       &:hover {
         background: $danger-color;
         color: $white;
-        transform: scale(1.1);
+        transform: scale(1.05);
       }
     }
   }

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, Enum as SQLEnum, func
+from sqlalchemy import Column, Boolean, Integer, String, DateTime, Text, Enum as SQLEnum, func
 from datetime import datetime, timezone
 from app.database import Base
 import enum
@@ -20,6 +20,8 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(50), nullable=False)
     email = Column(String(100), unique=True, nullable=False)
+    
+    is_active = Column(Boolean, default=True)
 
 #----------------------------------------
 # Modelo principal para registro de cargas
