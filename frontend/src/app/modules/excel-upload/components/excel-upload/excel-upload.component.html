@@ -101,6 +101,25 @@
             Descargar Plantilla
           </button>
         </div>
+        <!-- PROGRESO DE CARGA MASIVA -->
+        <div class="upload-progress-container" *ngIf="isUploading">
+
+        <!-- CÍRCULO DE PORCENTAJE -->
+        <div class="progress-circle-wrapper">
+          <div class="progress-circle">
+            <div class="progress-number">{{ uploadProgress }}%</div>
+          </div>
+        </div>
+
+        <!-- BARRA DE PROGRESO -->
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="uploadProgress"></div>
+        </div>
+
+        <!-- TEXTO -->
+        <p class="progress-text">Procesando archivo... {{ uploadProgress }}%</p>
+      </div>
+
       </div>
     </div>
   </div>
@@ -223,7 +242,7 @@
               <th>Estado</th>
               <th>Total Filas</th>
               <th>Exitosas</th>
-              <th>Fallidas</th>
+              <th>Incorrectas</th>
             </tr>
           </thead>
           <tbody>

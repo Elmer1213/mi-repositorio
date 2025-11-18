@@ -45,7 +45,7 @@ export class ExcelUploadComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadUploadLogs();
     this.subscribeToProgress();
-    this.excelUploadService.connectWebSocket(); 
+    // this.excelUploadService.connectWebSocket(); 
   }
 
   ngOnDestroy(): void {
@@ -97,6 +97,47 @@ export class ExcelUploadComponent implements OnInit, OnDestroy {
    */
   get canPreview(): boolean {
     return !!(this.selectedFile && !this.isLoadingPreview);
+  }
+
+   // ------------------------
+  // WEBSOCKET POR ID
+  // ------------------------
+
+  private connectWebSocket(uploadLogId: number) {
+    const ws = new WebSocket(`ws://localhost:8000/ws/excel-progress/${uploadLogId}`);
+
+    this.isUploading = true;
+    this.uploadProgress = 0;
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.progress !== undefined) {
+        this.uploadProgress = data.progress;
+      }
+
+      if (data.status === "completed") {
+        this.uploadProgress = 100;
+        this.uploadComplete = true;
+
+        setTimeout(() => {
+          this.isUploading = false;
+          this.loadUploadLogs();
+          this.resetUpload();
+        }, 800);
+
+        ws.close();
+      }
+    };
+
+    ws.onerror = () => {
+      console.error("WebSocket error");
+      this.isUploading = false;
+    };
+
+    ws.onclose = () => {
+      console.log("WebSocket closed");
+    };
   }
 
   // -------------------- SUBSCRIPCIONES --------------------
@@ -215,7 +256,7 @@ export class ExcelUploadComponent implements OnInit, OnDestroy {
   uploadData(): void {
     if (!this.canUpload) {
       if (this.hasPreviewErrors) {
-        this.errorMessage = '❌ No puedes subir un archivo con errores de validación.';
+        this.errorMessage = 'No puedes subir un archivo con errores de validación.';
       }
       return;
     }
@@ -228,18 +269,18 @@ export class ExcelUploadComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          this.isUploading = false;
-          this.uploadComplete = true;
-          this.successMessage = `Carga iniciada: ${response.total_rows} filas serán procesadas.`;
+          if (!response.upload_id) {
+            this.errorMessage = 'No se recibió upload_log_id del backend.';
+            this.isUploading = false;
+            return;
+          }
+         this.successMessage = `Procesando ${response.total_rows} filas...`;  
 
-          setTimeout(() => {
-            this.loadUploadLogs();
-            this.resetUpload();
-          }, 2000);
+         this.connectWebSocket(response.upload_id);
         },
         error: (error) => {
           this.isUploading = false;
-          this.errorMessage = error.error?.detail || '❌ Error al subir el archivo.';
+          this.errorMessage = error.error?.detail || 'Error al subir el archivo.';
           console.error('Error upload:', error);
         }
       });

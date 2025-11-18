@@ -736,3 +736,61 @@ $shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
     padding: 0.75rem 1.25rem;
   }
 }
+
+/* ===========================
+   PROGRESO DE CARGA MASIVA
+=========================== */
+
+.upload-progress-wrapper {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+/* ------- Círculo -------- */
+.progress-circle {
+  width: 90px;
+  height: 90px;
+  border: 6px solid #dcdcdc;
+  border-top-color: #2d8cff; /* tu color primario */
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.progress-inner span {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #2d8cff;
+}
+
+/* -------- Barra -------- */
+.progress-bar {
+  width: 80%;
+  height: 10px;
+  background: #e9e9e9;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: #2d8cff;
+  width: 0;
+  transition: width 0.3s ease-in-out;
+}
+
+.progress-label {
+  font-size: 14px;
+  color: #444;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
