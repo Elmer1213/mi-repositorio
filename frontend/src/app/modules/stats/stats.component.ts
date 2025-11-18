@@ -48,8 +48,8 @@ export class StatsComponent implements OnInit, AfterViewInit {
 
     this.excelUploadService.getUploadStats().subscribe({
       next: (data) => {
-        console.log('📊 Estadísticas cargadas:', data);
-        console.log('📈 chart_data:', data.chart_data);
+        console.log('Estadísticas cargadas:', data);
+        console.log('chart_data:', data.chart_data);
 
         this.stats = data;
         this.isLoading = false;
@@ -60,7 +60,7 @@ export class StatsComponent implements OnInit, AfterViewInit {
         }
       },
       error: (error) => {
-        console.error('❌ Error al cargar estadísticas:', error);
+        console.error('Error al cargar estadísticas:', error);
         this.isLoading = false;
       }
     });
@@ -68,32 +68,32 @@ export class StatsComponent implements OnInit, AfterViewInit {
 
   createCharts(): void {
     if (!this.stats || !this.stats.chart_data) {
-      console.warn('⚠️ No hay datos para crear gráficos');
+      console.warn('No hay datos para crear gráficos');
       console.log('stats:', this.stats);
       return;
     }
 
-    console.log('🎨 Creando gráficos...');
+    console.log('Creando gráficos...');
 
     try {
       this.createBarChart();
       this.createLineChart();
       this.createPieChart();
-      console.log('✅ Gráficos creados exitosamente');
+      console.log('Gráficos creados exitosamente');
     } catch (error) {
-      console.error('❌ Error al crear gráficos:', error);
+      console.error('Error al crear gráficos:', error);
     }
   }
 
   createBarChart(): void {
     if (!this.barChartCanvas) {
-      console.warn('⚠️ barChartCanvas no disponible');
+      console.warn('barChartCanvas no disponible');
       return;
     }
 
     const ctx = this.barChartCanvas.nativeElement.getContext('2d');
     if (!ctx) {
-      console.error('❌ No se pudo obtener el contexto del canvas');
+      console.error('No se pudo obtener el contexto del canvas');
       return;
     }
 
@@ -105,11 +105,11 @@ export class StatsComponent implements OnInit, AfterViewInit {
 
     // Validar que existan los datos necesarios
     if (!chartData.labels || !chartData.successful || !chartData.failed) {
-      console.error('❌ Faltan datos para el gráfico de barras:', chartData);
+      console.error('Faltan datos para el gráfico de barras:', chartData);
       return;
     }
 
-    console.log('📊 Creando gráfico de barras con:', {
+    console.log('Creando gráfico de barras con:', {
       labels: chartData.labels,
       successful: chartData.successful,
       failed: chartData.failed
@@ -175,7 +175,7 @@ export class StatsComponent implements OnInit, AfterViewInit {
 
   createLineChart(): void {
     if (!this.lineChartCanvas) {
-      console.warn('⚠️ lineChartCanvas no disponible');
+      console.warn('lineChartCanvas no disponible');
       return;
     }
 
@@ -192,7 +192,7 @@ export class StatsComponent implements OnInit, AfterViewInit {
     const labels = chartData.dates || chartData.labels;
 
     if (!labels || !chartData.successful || !chartData.failed) {
-      console.error('❌ Faltan datos para el gráfico de líneas');
+      console.error('Faltan datos para el gráfico de líneas');
       return;
     }
 
@@ -252,7 +252,7 @@ export class StatsComponent implements OnInit, AfterViewInit {
 
   createPieChart(): void {
     if (!this.pieChartCanvas) {
-      console.warn('⚠️ pieChartCanvas no disponible');
+      console.warn('pieChartCanvas no disponible');
       return;
     }
 
