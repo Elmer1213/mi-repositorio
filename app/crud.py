@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError, OperationalError
 from sqlalchemy import func, or_, desc
+from sqlalchemy import text 
 from typing import List, Optional
 from app import schemas, models
 from app.utils.logger_config import logger
@@ -30,7 +31,7 @@ def _validate_db_session(db: Session) -> bool:
     
     try:
         # Verificar que la sesión esté activa
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         return True
     except Exception as e:
         logger.error(f"Sesión de BD inválida o cerrada: {str(e)}")
@@ -193,7 +194,7 @@ def create_user(db: Session, user: schemas.UserCreate) -> Optional[models.User]:
         try:
             existing = get_user_by_email(db, user.email)
             if existing:
-                logger.warning(f"⚠️ Intento de crear usuario con email duplicado: {user.email}")
+                logger.warning(f"Intento de crear usuario con email duplicado: {user.email}")
                 raise ValueError(f"El email '{user.email}' ya está registrado")
         except ValueError:
             raise
